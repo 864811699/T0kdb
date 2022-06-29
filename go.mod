@@ -1,4 +1,4 @@
-module TOkdb
+module github.com/864811699/T0kdb
 
 go 1.14
 
