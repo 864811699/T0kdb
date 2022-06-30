@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
+	kdb "github.com/864811699/kdbgo"
 	logger "github.com/alecthomas/log4go"
-	kdb "github.com/864811699/T0kdb/kdbgo"
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
