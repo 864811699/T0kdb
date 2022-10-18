@@ -273,7 +273,9 @@ func (tb *tradeKdb) save() {
 }
 
 func (tb *tradeKdb) updateTab(o *Order) {
-
+	if o.Side==1{
+		o.CumQty=-o.CumQty
+	}
 	go tb.send2Tab(FuncUpdate, ResponseTab, ord2resp(o))
 	//go tb.send2Tab(FuncUpdate, ResponseTab, ord2entrust(o))
 }
