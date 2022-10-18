@@ -5,22 +5,19 @@ import (
 )
 
 const (
-	EntrustTab    = "request"
+	EntrustTab = "request"
 	//RequestTab    = "requestv3"
 	//CancelTab     = "cancelTab"
-	HeartBeat     = "HeartBeat"
-	ResponseTab   = "response"
+	HeartBeat   = "HeartBeat"
+	ResponseTab = "response"
 	//ResponseTabV3 = "responsev3"
-	FuncUpdate    = "wsupdv2"
+	FuncUpdate = "wsupdv2"
 )
 
 var (
 	entrustCols = []string{"sym", "qid", "accountname", "time", "entrustno", "stockcode", "askprice", "askvol",
-		"bidprice", "bidvol", "withdraw", "status","note"}
-
-	respCols = []string{"sym", "qid", "resptime", "orderID", "securityID", "entrustno", "cumqty", "avgpx", "status", "note"}
-
-	Tb  = &tradeKdb{}
+		"bidprice", "bidvol", "withdraw", "status", "note"}
+	Tb = &tradeKdb{}
 )
 
 type basic struct {
@@ -37,6 +34,7 @@ type entrust struct {
 	Askvol                   int32
 	Bidprice                 float64
 	Bidvol, Withdraw, Status int32
+	Note                     string
 }
 
 type Request struct {
@@ -64,13 +62,6 @@ type Order struct {
 	Note              string
 }
 
-
-type FullKdbCfg struct {
-	Host   string   `json:"host"`
-	Port   int      `json:"port"`
-	Auth   string   `json:"auth"`
-}
-
 type Cfg struct {
 	DbPath string   `json:"dbPath"`
 	Host   string   `json:"host"`
@@ -78,7 +69,6 @@ type Cfg struct {
 	Auth   string   `json:"auth"`
 	Sym    []string `json:"sym"`
 	MaxId  int32    `json:"maxId"`
-	FullKdbCfg *FullKdbCfg `json:"full_kdb_cfg"`
 }
 
 type Hold struct {

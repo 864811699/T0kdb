@@ -24,7 +24,7 @@ func Run(api TradeApi) {
 	cronTask(c)
 	
 	cfg := api.LoadCfg()
-	Tb = newKdb(cfg.Host, cfg.Port, cfg.Auth, cfg.DbPath, cfg.Sym, cfg.MaxId, cfg.FullKdbCfg)
+	Tb = newKdb(cfg.Host, cfg.Port, cfg.Auth, cfg.DbPath, cfg.Sym, cfg.MaxId)
 	Tb.start()
 	defer func() {
 		api.Stop()
@@ -44,6 +44,7 @@ func process(api TradeApi) {
 		for ; ; {
 			select {
 			case o, ok := <-Tb.orderChan:
+
 				go func() {
 					if !ok {
 						return

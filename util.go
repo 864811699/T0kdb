@@ -8,15 +8,18 @@ import (
 
 func ord2resp(order *Order) *kdb.K {
 
-	return kdb.NewTable(respCols, []*kdb.K{
+	return kdb.NewTable(entrustCols, []*kdb.K{
 		kdb.SymbolV([]string{order.Sym}),
 		kdb.SymbolV([]string{order.Qid}),
+		kdb.SymbolV([]string{order.Trader}),
 		kdb.TimeZV([]time.Time{time.Now()}),
-		kdb.SymbolV([]string{order.OrderId}),
-		kdb.SymbolV([]string{order.SecurityId}),
 		kdb.IntV([]int32{order.EntrustNo}),
-		kdb.IntV([]int32{order.CumQty}),
+		kdb.SymbolV([]string{order.Stockcode}),
+		kdb.FloatV([]float64{order.Askprice}),
+		kdb.IntV([]int32{order.Orderqty}),
 		kdb.FloatV([]float64{order.AvgPx}),
+		kdb.IntV([]int32{order.CumQty}),
+		kdb.IntV([]int32{order.Withdraw}),
 		kdb.IntV([]int32{order.Status}),
 		kdb.SymbolV([]string{order.Note}),
 	})

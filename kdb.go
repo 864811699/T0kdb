@@ -14,7 +14,7 @@ import (
 )
 
 type tradeKdb struct {
-	fullKdbCfg *FullKdbCfg
+
 	*kdb.KDBConn
 	*leveldb.DB
 	auth, path string
@@ -27,7 +27,7 @@ type tradeKdb struct {
 	oChan      chan *Order
 }
 
-func newKdb(h string, p int, auth, path string, sym []string, maxId int32, cfg *FullKdbCfg) *tradeKdb {
+func newKdb(h string, p int, auth, path string, sym []string, maxId int32) *tradeKdb {
 
 	return &tradeKdb{
 		KDBConn: &kdb.KDBConn{
@@ -43,7 +43,7 @@ func newKdb(h string, p int, auth, path string, sym []string, maxId int32, cfg *
 		cancelChan: make(chan *CancelReq, 10000),
 		orderChan:  make(chan *Order, 10000),
 		oChan:      make(chan *Order, 10000),
-		fullKdbCfg: cfg,
+
 	}
 }
 
@@ -126,16 +126,15 @@ func (tb *tradeKdb) readFromKdb() {
 						go func(i int) {
 							dat := tableK.Index(i)
 							row := new(entrust)
+
 							err := kdb.UnmarshalDict(dat, row)
 							if err != nil {
 								_ = logger.Error("Failed to unmarshal kdb index: %v, err: %v", dat, err)
 								return
 							}
-							if _, ok := tb.symMap[row.Accountname]; !ok {
-								return
-							}
+
 							b := basic{
-								Sym: row.Accountname,
+								Sym: row.Sym,
 								Qid: row.Qid,
 							}
 							// cancel order
@@ -149,11 +148,11 @@ func (tb *tradeKdb) readFromKdb() {
 							o := &Order{
 								Request: Request{
 									basic: basic{
-										Sym: row.Accountname,
+										Sym: row.Sym,
 										Qid: row.Qid,
 									},
 									Time:      row.Time,
-									Trader:    row.Sym,
+									Trader:    row.Accountname,
 									Stockcode: row.Stockcode,
 									Askprice:  row.Askprice,
 									Orderqty:  row.Askvol,
@@ -163,14 +162,6 @@ func (tb *tradeKdb) readFromKdb() {
 							if row.Askvol < 0 {
 								o.Orderqty = - o.Orderqty
 								o.Side = 1
-								// sell / ss market order
-
-							} else {
-								// buy / btc market order
-								if o.Askprice <= 0.1 {
-									o.Ordertype = 0
-								}
-
 							}
 							tb.orderChan <- o
 						}(i)
@@ -283,8 +274,8 @@ func (tb *tradeKdb) save() {
 
 func (tb *tradeKdb) updateTab(o *Order) {
 
-	//go tb.send2Tab(FuncUpdate, ResponseTabV3, ord2resp(o))
-	go tb.send2Tab(FuncUpdate, ResponseTab, ord2entrust(o))
+	go tb.send2Tab(FuncUpdate, ResponseTab, ord2resp(o))
+	//go tb.send2Tab(FuncUpdate, ResponseTab, ord2entrust(o))
 }
 
 func (tb *tradeKdb) updateOrder(o *Order) {
@@ -307,22 +298,15 @@ func (tb *tradeKdb) updateOrder(o *Order) {
 
 func (tb *tradeKdb) querySql() ([]*queryResult, error) {
 
-	cfg := tb.fullKdbCfg
-	conn, err := kdb.DialKDBTimeout(cfg.Host, cfg.Port, cfg.Auth, time.Second*10)
-	if err != nil {
-		logger.Crashf("connect with fullKdb error: %v", err)
-	}
-	defer conn.Close()
-	logger.Debug("connected with fullKdb, host: %v, port: %v", cfg.Host, cfg.Port)
 	acct := strings.Join(tb.sym, "`")
 	//query1 := fmt.Sprintf("select entrustno,status,cumqty:abs(bidvol) from %s where accountname in `%s, status < 4", ResponseTab, acct)
 	//query2 := fmt.Sprintf("select entrustno,status,cumqty from %s where sym in `%s, status < 4", ResponseTabV3, acct)
 	//query := fmt.Sprintf("distinct select from (%s) uj (%s) where status = (min;status) fby entrustno, cumqty = (min;cumqty) fby entrustno",
 	//	query1, query2)
 	//
-	query:=fmt.Sprintf("select entrustno,status,cumqty from  response where  sym in `%s, status<4",acct)
+	query:=fmt.Sprintf("select entrustno,status,bidprice from  response where  sym in `%s, status<4",acct)
 
-	res, err := conn.Call(query)
+	res, err := tb.Call(query)
 	if err != nil {
 		return nil, err
 	}
@@ -370,7 +354,7 @@ func (tb *tradeKdb) updateAfterReboot() {
 func (tb *tradeKdb) start() {
 
 	tb.connect()
-	tb.slice2Map()
+	//tb.slice2Map()
 	tb.openDB()
 	tb.save()
 	tb.updateAfterReboot()
